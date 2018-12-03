@@ -5,6 +5,12 @@ Created on Sun Apr  5 00:00:32 2015
 """
 from chat_utils import *
 import json
+import encrypt
+import random 
+
+# Set a clock size and a base number (PUBLIC)
+clock_size = 11
+base = 2
 
 class ClientSM:
     def __init__(self, s):
@@ -13,7 +19,15 @@ class ClientSM:
         self.me = ''
         self.out_msg = ''
         self.s = s
-
+        #assign a private number to each created user 
+        self.private_num = int(random.randint(1, (clock_size - 1)))
+        #create a public_private number = (base**(private_num)) % clock size
+        self.pp_num = ((base**(self.private_num)) % clock_size)
+        #obtained after succesfull connection (peer_public_private_number)
+        self.peer_pp_num = 0
+        #message offset
+        self.offset = 0
+        
     def set_state(self, state):
         self.state = state
 
@@ -25,13 +39,25 @@ class ClientSM:
 
     def get_myname(self):
         return self.me
-
+    
+    # setter for self.peer_pp_num 
+    def set_peer_pp_num (self, num):
+        self.peer_pp_num = num
+    
+    # set the offset
+    def set_offset (self):
+        self.offset = ((self.peer_pp_num**(self.private_num)) % clock_size)
+    
     def connect_to(self, peer):
-        msg = json.dumps({"action":"connect", "target":peer})
+        # add your public private number to json.dumps 
+        msg = json.dumps({"action":"connect", "target":peer, "PPnum": self.pp_num})
         mysend(self.s, msg)
         response = json.loads(myrecv(self.s))
         if response["status"] == "success":
             self.peer = peer
+            #set your partners private public number
+            self.set_peer_pp_num (response["PPnum"])
+            self.set_offset()
             self.out_msg += 'You are connected with '+ self.peer + '\n'
             return (True)
         elif response["status"] == "busy":
@@ -122,7 +148,9 @@ class ClientSM:
 #==============================================================================
         elif self.state == S_CHATTING:
             if len(my_msg) > 0:     # my stuff going out
-                mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":my_msg}))
+                #encrypt before sending
+                encrypted_msg = encrypt.encrypt_msg(my_msg, self.offset)
+                mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":encrypted_msg}))
                 if my_msg == 'bye':
                     self.disconnect()
                     self.state = S_LOGGEDIN
@@ -134,7 +162,11 @@ class ClientSM:
                 elif peer_msg["action"] == "disconnect":
                     self.state = S_LOGGEDIN
                 else:
+                    #decrypt message 
+                    decrypted_msg = encrypt.decrypt_msg(peer_msg["message"], self.offset)
                     self.out_msg += peer_msg["from"] + peer_msg["message"]
+                    ''' implement once sure encryption is working ''' 
+                    #self.out_msg += peer_msg["from"] + decrypted
 
 
             # Display the menu again
