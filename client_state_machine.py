@@ -9,8 +9,9 @@ import encrypt
 import random 
 
 # Set a clock size and a base number (PUBLIC)
-clock_size = 11
-base = 2
+clock_size = 127
+base = 23
+n = 100
 
 class ClientSM:
     def __init__(self, s):
@@ -19,14 +20,14 @@ class ClientSM:
         self.me = ''
         self.out_msg = ''
         self.s = s
-        #assign a private number to each created user 
-        self.private_num = int(random.randint(1, (clock_size - 1)))
-        #create a public_private number = (base**(private_num)) % clock size
-        self.pp_num = ((base**(self.private_num)) % clock_size)
-        #obtained after succesfull connection (peer_public_private_number)
-        self.peer_pp_num = 0
-        #message offset
-        self.offset = 0
+        #assign a private number list to each created user 
+        self.p_num = [random.randint(1, (clock_size - 1)) for x in range(n)]
+        #create a public_private number list pp_num = (base**(private_num)) % clock size
+        self.pp_num = [((base**(p_num)) % clock_size) for p_num in self.p_num]
+        #obtained after succesfull connection (peer_public_private_number list)
+        self.peer_pp_num = []
+        #message offset list
+        self.offset = []
         
     def set_state(self, state):
         self.state = state
@@ -41,12 +42,12 @@ class ClientSM:
         return self.me
     
     # setter for self.peer_pp_num 
-    def set_peer_pp_num (self, num):
-        self.peer_pp_num = num
+    def set_peer_pp_num (self, num_lst):
+        self.peer_pp_num = num_lst
     
     # set the offset
     def set_offset (self):
-        self.offset = ((self.peer_pp_num**(self.private_num)) % clock_size)
+        self.offset = [((self.peer_pp_num[i] ** (self.p_num[i])) % clock_size) for i in range(n)]
     
     def connect_to(self, peer):
         # add your public private number to json.dumps 
@@ -149,8 +150,8 @@ class ClientSM:
         elif self.state == S_CHATTING:
             if len(my_msg) > 0:     # my stuff going out
                 #encrypt before sending
-                encrypted_msg = encrypt.encrypt_msg(my_msg, self.offset)
-                mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":encrypted_msg}))
+                #encrypted_msg = encrypt.encrypt_msg(my_msg, self.offset)
+                mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":str(self.offset)}))
                 if my_msg == 'bye':
                     self.disconnect()
                     self.state = S_LOGGEDIN
@@ -163,7 +164,7 @@ class ClientSM:
                     self.state = S_LOGGEDIN
                 else:
                     #decrypt message 
-                    decrypted_msg = encrypt.decrypt_msg(peer_msg["message"], self.offset)
+                    #decrypted_msg = encrypt.decrypt_msg(peer_msg["message"], self.offset)
                     self.out_msg += peer_msg["from"] + peer_msg["message"]
                     ''' implement once sure encryption is working ''' 
                     #self.out_msg += peer_msg["from"] + decrypted
