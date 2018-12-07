@@ -51,15 +51,13 @@ class ClientSM:
     
     def connect_to(self, peer):
         # add your public private number to json.dumps 
-        msg = json.dumps({"action":"connect", "target":peer, "PPnum": self.pp_num})
+        msg = json.dumps({"action":"connect", "target":peer, "PP": self.pp_num})
         mysend(self.s, msg)
         response = json.loads(myrecv(self.s))
         if response["status"] == "success":
             self.peer = peer
-            #set your partners private public number
-            self.set_peer_pp_num (response["PPnum"])
-            self.set_offset()
             self.out_msg += 'You are connected with '+ self.peer + '\n'
+            set peer pp num                
             return (True)
         elif response["status"] == "busy":
             self.out_msg += 'User is busy. Please try again later\n'
@@ -106,7 +104,7 @@ class ClientSM:
                     peer = peer.strip()
                     if self.connect_to(peer) == True:
                         self.state = S_CHATTING
-                        self.out_msg += 'Connect to ' + peer + '. Chat away!\n\n'
+                        self.out_msg += 'Connected to ' + peer + '. Chat away!\n\n'
                         self.out_msg += '-----------------------------------\n'
                     else:
                         self.out_msg += 'Connection unsuccessful\n'
@@ -141,8 +139,10 @@ class ClientSM:
                     self.out_msg += 'You are connected with ' + self.peer
                     self.out_msg += '. Chat away!\n\n'
                     self.out_msg += '------------------------------------\n'
+                    #set your partners private public number
+                    self.set_peer_pp_num (peer_msg["PPnum"])
+                    self.set_offset()
                     self.state = S_CHATTING
-
 #==============================================================================
 # Start chatting, 'bye' for quit
 # This is event handling instate "S_CHATTING"
@@ -151,7 +151,7 @@ class ClientSM:
             if len(my_msg) > 0:     # my stuff going out
                 #encrypt before sending
                 #encrypted_msg = encrypt.encrypt_msg(my_msg, self.offset)
-                mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":str(self.offset)}))
+                mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message": 'your pp list: ' + str(self.peer_pp_num) + '\n my pp list: ' + str(self.pp_num) + '\n our offset' + str(self.offset)}))
                 if my_msg == 'bye':
                     self.disconnect()
                     self.state = S_LOGGEDIN
@@ -165,7 +165,7 @@ class ClientSM:
                 else:
                     #decrypt message 
                     #decrypted_msg = encrypt.decrypt_msg(peer_msg["message"], self.offset)
-                    self.out_msg += peer_msg["from"] + peer_msg["message"]
+                    self.out_msg += peer_msg["from"] + ' ' + peer_msg["message"]
                     ''' implement once sure encryption is working ''' 
                     #self.out_msg += peer_msg["from"] + decrypted
 
