@@ -13,6 +13,7 @@ class ClientSM:
         self.me = ''
         self.out_msg = ''
         self.s = s
+        self.game_peer = ''
 
     def set_state(self, state):
         self.state = state
@@ -47,6 +48,22 @@ class ClientSM:
         mysend(self.s, msg)
         self.out_msg += 'You are disconnected from ' + self.peer + '\n'
         self.peer = ''
+        
+    def tictactoe_to(self, peer):
+        msg = json.dumps({"action":"game_request", "from":peer})
+        mysend(self.s, msg)
+        response = json.loads(myrecv(self.s))
+        if response["status"] == "success":
+            self.game_peer = peer
+            self.out_msg += 'You are playing with '+ self.game_peer + '\n'
+            return (True)
+        elif response["status"] == "busy":
+            self.out_msg += 'User is busy. Please try again later\n'
+        elif response["status"] == "self":
+            self.out_msg += 'You should not play with yourself (sick)\n'
+        else:
+            self.out_msg += 'User is not online, try again later\n'
+        return(False)
 
     def proc(self, my_msg, peer_msg):
         self.out_msg = ''
@@ -115,7 +132,7 @@ class ClientSM:
                     self.out_msg += '. Chat away!\n\n'
                     self.out_msg += '------------------------------------\n'
                     self.state = S_CHATTING
-
+    
 #==============================================================================
 # Start chatting, 'bye' for quit
 # This is event handling instate "S_CHATTING"
@@ -127,12 +144,32 @@ class ClientSM:
                     self.disconnect()
                     self.state = S_LOGGEDIN
                     self.peer = ''
+                if my_msg[0:9] == 'tictactoe':
+                    peer = my_msg[10:]
+                    peer.strip()
+                    if self.tictactoe_to(peer) == True:
+                        self.out_msg += 'Connected to ' + peer + '. Match on!\n\n'
+                        self.out_msg += '-----------------------------------\n'
+                        self.state = S_PLAYING
+                    else:
+                        self.out_msg += 'Connection unsuccessful\n'
+            
             if len(peer_msg) > 0:    # peer's stuff, coming in
                 peer_msg = json.loads(peer_msg)
                 if peer_msg["action"] == "connect":
                     self.out_msg += "(" + peer_msg["from"] + " joined)\n"
                 elif peer_msg["action"] == "disconnect":
                     self.state = S_LOGGEDIN
+            
+                elif len(peer_msg) > 0:
+                    if peer_msg["action"] == "game_request":
+                        self.game_peer = peer_msg["from"]
+                        self.out_msg += 'Request from ' + self.game_peer + '\n'
+                        self.out_msg += 'You are connected with ' + self.peer
+                        self.out_msg += '. Match on!\n\n'
+                        self.out_msg += '------------------------------------\n'
+                        self.state = S_PLAYING
+                
                 else:
                     self.out_msg += peer_msg["from"] + peer_msg["message"]
 
@@ -140,9 +177,17 @@ class ClientSM:
             # Display the menu again
             if self.state == S_LOGGEDIN:
                 self.out_msg += menu
+                
+#==============================================================================
+# TICTACTOE
+#==============================================================================
+                
+        elif self.state == S_PLAYING:
+            print([[],[],[]])
 #==============================================================================
 # invalid state
 #==============================================================================
+
         else:
             self.out_msg += 'How did you wind up here??\n'
             print_state(self.state)
