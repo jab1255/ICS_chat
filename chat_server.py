@@ -106,7 +106,7 @@ class Server:
                     to_sock = self.logged_name2sock[to_name]
                     self.group.connect(from_name, to_name)
                     the_guys = self.group.list_me(from_name)
-                    msg = json.dumps({"action":"connect", "status":"success", "PPnum" : msg["PPnum"]})
+                    msg = json.dumps({"action":"connect", "status":"success"})
                     for g in the_guys[1:]:
                         to_sock = self.logged_name2sock[g]
                         mysend(to_sock, json.dumps({"action":"connect", "status":"request", "from":from_name}))
