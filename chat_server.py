@@ -99,7 +99,6 @@ class Server:
             if msg["action"] == "connect":
                 to_name = msg["target"]
                 from_name = self.logged_sock2name[from_sock]
-                pp_nums = msg["PP"]
                 if to_name == from_name:
                     msg = json.dumps({"action":"connect", "status":"self"})
                 # connect to the peer
@@ -107,10 +106,10 @@ class Server:
                     to_sock = self.logged_name2sock[to_name]
                     self.group.connect(from_name, to_name)
                     the_guys = self.group.list_me(from_name)
-                    msg = json.dumps({"action":"connect", "status":"success"})
+                    msg = json.dumps({"action":"connect", "status":"success", "PPnum" : msg["PPnum"]})
                     for g in the_guys[1:]:
                         to_sock = self.logged_name2sock[g]
-                        mysend(to_sock, json.dumps({"action":"connect", "status":"request", "from":from_name, "PPnum" : pp_nums}))
+                        mysend(to_sock, json.dumps({"action":"connect", "status":"request", "from":from_name}))
                 else:
                     msg = json.dumps({"action":"connect", "status":"no-user"})
                 mysend(from_sock, msg)
@@ -177,6 +176,7 @@ class Server:
 #==============================================================================
 #                 the "from" guy really, really has had enough
 #==============================================================================
+
         else:
             #client died unexpectedly
             self.logout(from_sock)
