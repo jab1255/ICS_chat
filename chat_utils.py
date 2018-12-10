@@ -4,7 +4,7 @@ import time
 # use local loop back address by default
 #CHAT_IP = '127.0.0.1'
 # CHAT_IP = socket.gethostbyname(socket.gethostname())
-CHAT_IP = ''#socket.gethostbyname(socket.gethostname())
+CHAT_IP = socket.gethostbyname(socket.gethostname())
 
 CHAT_PORT = 1112
 SERVER = (CHAT_IP, CHAT_PORT)
@@ -17,7 +17,7 @@ menu = "\n++++ Choose one of the following commands\n \
         p _#_: to get number <#> sonnet\n \
         q: to leave the chat system\n\
         \n +++ Game +++ \n\
-        tictactoe: to play\n\n"
+        tictactoe _peer_: to play\n\n"
 
 S_OFFLINE   = 0
 S_CONNECTED = 1
