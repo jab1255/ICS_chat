@@ -174,6 +174,37 @@ class Server:
                     to_sock = self.logged_name2sock[g]
                     mysend(to_sock, json.dumps({"action":"disconnect"}))
 #==============================================================================
+# TIC TAC TOE
+#==============================================================================
+            elif msg["action"] == "game_request":
+                to_name = msg["from"]
+                from_name = self.logged_sock2name[from_sock]
+                if to_name == from_name:
+                    msg = json.dumps({"action":"game_request", "status":"self"})
+                elif self.group.is_member(to_name):
+                    to_sock = self.logged_name2sock[to_name]
+                    msg = json.dumps({"action":"game_request", "status":"success", "from":msg["from"]})
+                    mysend(to_sock, msg)
+                else:
+                    msg = json.dumps({"action":"game_request", "status":"no-user"})
+                mysend(from_sock, msg)
+                
+                
+                
+                
+                
+                
+#                from_name = self.logged_sock2name[from_sock]
+#                the_guys = self.group.list_me(from_name)
+#                #said = msg["from"]+msg["message"]
+#                said2 = text_proc(msg["message"], from_name)
+#                self.indices[from_name].add_msg_and_index(said2)
+#                for g in the_guys[1:]:
+#                    to_sock = self.logged_name2sock[g]
+#                    self.indices[g].add_msg_and_index(said2)
+#                    mysend(to_sock, json.dumps({"action":"exchange", "from":msg["from"], "message":msg["message"]}))
+                    
+#==============================================================================
 #                 the "from" guy really, really has had enough
 #==============================================================================
 
