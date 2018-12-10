@@ -193,25 +193,15 @@ class Server:
                     msg = json.dumps({"action":"game_request", "status":"no-user"})
                 mysend(from_sock, msg)
                 
+            elif msg['action'] == 'move': 
+                to_name = msg["from"]
+                from_name = self.logged_sock2name[from_sock]
+                to_sock = self.logged_name2sock[to_name]
+                mysend(to_sock, msg)
                 
-                
-                
-                
-                
-#                from_name = self.logged_sock2name[from_sock]
-#                the_guys = self.group.list_me(from_name)
-#                #said = msg["from"]+msg["message"]
-#                said2 = text_proc(msg["message"], from_name)
-#                self.indices[from_name].add_msg_and_index(said2)
-#                for g in the_guys[1:]:
-#                    to_sock = self.logged_name2sock[g]
-#                    self.indices[g].add_msg_and_index(said2)
-#                    mysend(to_sock, json.dumps({"action":"exchange", "from":msg["from"], "message":msg["message"]}))
-                    
 #==============================================================================
 #                 the "from" guy really, really has had enough
 #==============================================================================
-            elif msg['action'] == "game_request":
                                        
         else:
             #client died unexpectedly

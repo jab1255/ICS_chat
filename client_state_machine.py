@@ -14,6 +14,8 @@ class ClientSM:
         self.out_msg = ''
         self.s = s
         self.game_peer = ''
+        self.move = []
+        
 
     def set_state(self, state):
         self.state = state
@@ -64,9 +66,32 @@ class ClientSM:
         else:
             self.out_msg += 'User is not online, try again later\n'
         return(False)
-
+        
+    def print_array(self):
+        for l in self.array:
+            self.out_msg += str(l) + '\n'
+        
+    def player_move(self,command, key):
+        self.move = []
+        for c in command:
+            try:
+                self.move.append(int(c))
+            except:
+                pass
+        
+        if  self.array[self.move[1]][self.move[0]] == " ":
+            self.array[self.move[1]][self.move[0]] = key
+            self.print_array()
+            return True
+        else:
+            self.out_msg += "Invalid move. Position is already taken."
+        
+        
     def proc(self, my_msg, peer_msg):
         self.out_msg = ''
+        
+        
+       
 #==============================================================================
 # Once logged in, do a few things: get peer listing, connect, search
 # And, of course, if you are so bored, just go
@@ -183,7 +208,16 @@ class ClientSM:
 #==============================================================================
                 
         elif self.state == S_PLAYING:
-            print([[],[],[]])
+            
+            if len(my_msg) > 0:
+                if self.player_move(my_msg, self.key) == TRUE:
+                    msg = json.dumps({"action":"move", "from":self.me, "position" : my_msg, "key": self.key})
+                    mysend(self.s, msg)
+            if len(peer_msg) > 0: 
+                if peer_msg["action"] == "move":
+                    command = peer_msg['position']
+                    key = peer_msg['key']
+                    self.player_move(command, key)
 #==============================================================================
 # invalid state
 #==============================================================================
