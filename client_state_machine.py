@@ -14,9 +14,15 @@ class ClientSM:
         self.out_msg = ''
         self.s = s
         self.game_peer = ''
+<<<<<<< HEAD
         self.move = []
         
 
+=======
+        self.array = [[' ', ' ', ' '], [' ', ' ', ' '], [' ', ' ', ' ']]
+        self.key = ''
+        
+>>>>>>> 3f7a692a3757c2820248b89220ce64b12710b9bf
     def set_state(self, state):
         self.state = state
 
@@ -57,6 +63,7 @@ class ClientSM:
         response = json.loads(myrecv(self.s))
         if response["status"] == "success":
             self.game_peer = peer
+            self.key = "X"
             self.out_msg += 'You are playing with '+ self.game_peer + '\n'
             return (True)
         elif response["status"] == "busy":
@@ -189,6 +196,7 @@ class ClientSM:
                 elif len(peer_msg) > 0:
                     if peer_msg["action"] == "game_request":
                         self.game_peer = peer_msg["from"]
+                        self.key = "O"
                         self.out_msg += 'Request from ' + self.game_peer + '\n'
                         self.out_msg += 'You are connected with ' + self.peer
                         self.out_msg += '. Match on!\n\n'
@@ -208,6 +216,7 @@ class ClientSM:
 #==============================================================================
                 
         elif self.state == S_PLAYING:
+<<<<<<< HEAD
             
             if len(my_msg) > 0:
                 if self.player_move(my_msg, self.key) == TRUE:
@@ -218,6 +227,13 @@ class ClientSM:
                     command = peer_msg['position']
                     key = peer_msg['key']
                     self.player_move(command, key)
+=======
+            for l in self.array:
+                self.out_msg += str(l) + '\n'
+            self.out_msg += 'Game functionality: type x,y coordinates\n\
+                            0,0 is the top-left corner and 2,2 is the\n\
+                            bottom-right corner' 
+>>>>>>> 3f7a692a3757c2820248b89220ce64b12710b9bf
 #==============================================================================
 # invalid state
 #==============================================================================
