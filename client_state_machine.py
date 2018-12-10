@@ -14,15 +14,10 @@ class ClientSM:
         self.out_msg = ''
         self.s = s
         self.game_peer = ''
-<<<<<<< HEAD
         self.move = []
-        
-
-=======
         self.array = [[' ', ' ', ' '], [' ', ' ', ' '], [' ', ' ', ' ']]
         self.key = ''
         
->>>>>>> 3f7a692a3757c2820248b89220ce64b12710b9bf
     def set_state(self, state):
         self.state = state
 
@@ -93,7 +88,23 @@ class ClientSM:
         else:
             self.out_msg += "Invalid move. Position is already taken."
         
-        
+    def check_X_winner (self,lst):
+        for l in lst:
+            if l == ['X','X','X']:
+                return True
+        for i in range(3):
+            return (lst[0][i] == lst[1][i] == lst[2][i] == 'X')
+        return (((lst[0][0] == lst[1][1] == lst[2][2] == 'X') or (lst[0][2] == lst[1][1] == lst[2][0])) == 'X')
+
+    def check_O_winner (self,lst):
+        for l in lst:
+            if l == ['O','O','O']:
+                return True
+        for i in range(3):
+            return (lst[0][i] == lst[1][i] == lst[2][i] == 'O')
+        return (((lst[0][0] == lst[1][1] == lst[2][2] == 'O') or (lst[0][2] == lst[1][1] == lst[2][0])) == 'O')
+
+    
     def proc(self, my_msg, peer_msg):
         self.out_msg = ''
         
@@ -216,8 +227,10 @@ class ClientSM:
 #==============================================================================
                 
         elif self.state == S_PLAYING:
-<<<<<<< HEAD
             
+            self.out_msg += 'Game functionality: type x,y coordinates\n\
+                            0,0 is the top-left corner and 2,2 is the\n\
+                            bottom-right corner' 
             if len(my_msg) > 0:
                 if self.player_move(my_msg, self.key) == TRUE:
                     msg = json.dumps({"action":"move", "from":self.me, "position" : my_msg, "key": self.key})
@@ -227,13 +240,7 @@ class ClientSM:
                     command = peer_msg['position']
                     key = peer_msg['key']
                     self.player_move(command, key)
-=======
-            for l in self.array:
-                self.out_msg += str(l) + '\n'
-            self.out_msg += 'Game functionality: type x,y coordinates\n\
-                            0,0 is the top-left corner and 2,2 is the\n\
-                            bottom-right corner' 
->>>>>>> 3f7a692a3757c2820248b89220ce64b12710b9bf
+            
 #==============================================================================
 # invalid state
 #==============================================================================
