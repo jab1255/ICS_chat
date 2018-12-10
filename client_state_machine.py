@@ -127,6 +127,10 @@ class ClientSM:
                     self.disconnect()
                     self.state = S_LOGGEDIN
                     self.peer = ''
+                if my_msg == 'tictactoe':
+                    msg = json.dumps({"action":"game_request", "target":self.peer})
+                    mysend(self.s, msg)
+                    self.state = S_PLAYING
             if len(peer_msg) > 0:    # peer's stuff, coming in
                 peer_msg = json.loads(peer_msg)
                 if peer_msg["action"] == "connect":
