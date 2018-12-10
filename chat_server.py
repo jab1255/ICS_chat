@@ -34,6 +34,8 @@ class Server:
         # self.sonnet = pkl.load(self.sonnet_f)
         # self.sonnet_f.close()
         self.sonnet = indexer.PIndex("AllSonnets.txt")
+        self.Slist = [[' ',' ',' '],[' ',' ',' '],[' ',' ',' ']]
+        self.Rlist = [[' ',' ',' '],[' ',' ',' '],[' ',' ',' ']]
     def new_client(self, sock):
         #add to all sockets and to new clients
         print('new client...')
@@ -173,10 +175,13 @@ class Server:
                     g = the_guys.pop()
                     to_sock = self.logged_name2sock[g]
                     mysend(to_sock, json.dumps({"action":"disconnect"}))
+                    
+            #going to start my own code
 #==============================================================================
 #                 the "from" guy really, really has had enough
 #==============================================================================
-
+            elif msg['action'] == "game_request":
+                                       
         else:
             #client died unexpectedly
             self.logout(from_sock)
