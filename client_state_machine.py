@@ -59,7 +59,6 @@ class ClientSM:
         if response["status"] == "success":
             self.game_peer = peer
             self.key = "X"
-            self.out_msg += 'You are playing with '+ self.game_peer + '\n'
             return (True)
         elif response["status"] == "busy":
             self.out_msg += 'User is busy. Please try again later\n'
@@ -204,10 +203,13 @@ class ClientSM:
                 peer = my_msg[10:]
                 peer.strip()
                 if self.tictactoe_to(peer) == True:
-                    self.out_msg += 'Connected to ' + peer + '. Match on!\n\n'
+                    self.out_msg += '\n\n-----------------------------------\n'
+                    self.out_msg += '\nConnected to ' + peer + '. Match on!\n\n'
                     self.out_msg += '-----------------------------------\n'
                     self.out_msg += 'Game functionality:'
-                    self.out_msg += 'type x,y coordinates 0,0 is the top-left corner and 2,2 is the bottom-right corner.\n\n'
+                    self.out_msg += 'type x,y coordinates 0,0 is the top-left corner \n 2,2 is the bottom-right corner.\n\n'
+                    self.out_msg += 'You are: ' + self.key
+                    self.out_msg += '\n\n Your turn \n\n'
                     self.state = S_PLAYING
                     self.print_array()
             
@@ -224,14 +226,16 @@ class ClientSM:
                     if peer_msg["action"] == "game_request":
                         self.game_peer = peer_msg["from"]
                         self.key = "O"
-                        self.out_msg += 'Request from ' + self.game_peer + '\n'
+                        self.out_msg += '\n\n-----------------------------------\n'
+                        self.out_msg += '\nRequest from ' + self.game_peer + '\n'
                         self.out_msg += 'You are connected with ' + self.peer
-                        self.out_msg += '. Match on!\n\n'
+                        self.out_msg += 'Match on!\n\n'
                         self.out_msg += '------------------------------------\n'
                         self.out_msg += 'Game functionality:'
-                        self.out_msg += 'type x,y coordinates 0,0 is the top-left corner and 2,2 is the bottom-right corner.\n\n'
+                        self.out_msg += 'type x,y coordinates 0,0 is the top-left corner \n 2,2 is the bottom-right corner.\n\n'
+                        self.out_msg += 'You are: ' + self.key
                         self.state = S_WAITING
-                        self.out_msg += "Other player's turn\n"
+                        self.out_msg += "\n\n Other player's turn\n\n"
                         self.print_array()
 
             # Display the menu again
@@ -244,23 +248,34 @@ class ClientSM:
                 
         elif self.state == S_PLAYING:
             if len(my_msg) > 0:
-                if self.player_move(my_msg, self.key) == True:
+                if my_msg == 'quit' :
+                    self.state = S_CHATTING
+                    self.game_peer = ''
+                    mysend(self.s, json.dumps({"action":"quit"}))
+                    self.out_msg += 'You just quit the game. Resuming chat...\n'
+                    
+                elif self.player_move(my_msg, self.key) == True:
                     self.state = S_WAITING
                     msg = json.dumps({"action":"move", "position" : my_msg, "key": self.key})
                     mysend(self.s, msg)
+                    self.out_msg += '\n\nWaiting on other player move... \n\n'
                 
 
             
         elif self.state == S_WAITING:
             if len(peer_msg) > 0:
-                self.out_msg += "Other player's turn\n" 
                 peer_msg = json.loads(peer_msg)
                 if peer_msg["action"] == "move":
                     self.state = S_PLAYING
                     command = peer_msg['position']
                     key = peer_msg['key']
+                    self.out_msg += "Your turn\n\n"
                     self.player_move(command, key)
-                
+                    
+                elif peer_msg["action"] == 'quit':
+                    self.out_msg += 'Partner jus quit the game. Resuming chat...\n'
+                    self.game_peer = ''
+                    self.state = S_CHATTING
                        
 #==============================================================================
 # invalid state
