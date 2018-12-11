@@ -235,7 +235,7 @@ class ClientSM:
                 
                 else:
                     self.out_msg += peer_msg["from"] + peer_msg["message"]
-
+                
 
             # Display the menu again
             if self.state == S_LOGGEDIN:
@@ -252,7 +252,23 @@ class ClientSM:
                     msg = json.dumps({"action":"move", "position" : my_msg, "key": self.key})
                     mysend(self.s, msg)
                 
-
+                if self.check_X_winner(self.array):
+                        self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
+                        
+                        self.out_msg = "\nX win! Enjoy chatting!\n\n"
+                         
+                        self.state = S_LOGGEDIN
+                        self.peer = ''
+                        mysend(self.s, json.dumps({"action" : "quit"}))
+                        
+                elif self.check_O_winner(self.array):
+                        self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
+                        
+                        self.out_msg = "\nO Wins! Enjoy chatting!\n\n"
+                          
+                        self.state = S_LOGGEDIN
+                        self.peer = ''
+                        mysend(self.s, json.dumps({"action" : "quit"}))
             
         elif self.state == S_WAITING:
             if len(peer_msg) > 0:
