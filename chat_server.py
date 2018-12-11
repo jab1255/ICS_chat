@@ -192,7 +192,7 @@ class Server:
                     msg = json.dumps({"action":"game_request", "status":"no-user"})
                 mysend(from_sock, msg)
                 
-            elif (msg['action'] == 'move') or (msg['action'] == 'quit'): 
+            elif (msg['action'] == 'move') or (msg['action'] == 'quit') or (msg['action'] == 'end'): 
                 from_name = self.logged_sock2name[from_sock]
                 the_guys = self.group.list_me(from_name)
                 for g in the_guys[1:]:

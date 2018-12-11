@@ -69,8 +69,16 @@ class ClientSM:
         return(False)
         
     def print_array(self):
-        for l in self.array:
-            self.out_msg += str(l) + '\n'
+        g= self.array
+        
+        
+        print("   #   #   ")
+        print(" " + g[0][0] +" " +"#"+" " + g[1][0] +" " + "#"+ " " + g[2][0] +" ")
+        print("####################")
+        print(" " + g[0][1] +" " +"#"+" " + g[1][1] +" " +"#"+ " " + g[2][1] +" ")
+        print("####################")
+        print(" " + g[0][2] +" " +"#"+" " + g[1][2] +" " +"#"+ " " + g[2][2] +" ")
+       
         
     def player_move(self,command, key):
         self.move = []
@@ -86,22 +94,42 @@ class ClientSM:
             return True
         else:
             self.out_msg += "Invalid move. Position is already taken."
+    def draw (self,lst):
+        for l in lst:
+            for i in l:
+                if i == " ":
+                    return False
+        return True            
+        
+    
         
     def check_X_winner (self,lst):
         for l in lst:
             if l == ['X','X','X']:
                 return True
-        for i in range(3):
-            return (lst[0][i] == lst[1][i] == lst[2][i] == 'X')
-        return (((lst[0][0] == lst[1][1] == lst[2][2] == 'X') or (lst[0][2] == lst[1][1] == lst[2][0])) == 'X')
+        if lst[0][0] == lst[1][1] == lst[2][2] == 'X':
+            
+            
+            return True
+        elif lst[0][2] == lst[1][1] == lst[2][0] == 'X':
+    
+    
+    
+            return True
 
     def check_O_winner (self,lst):
         for l in lst:
             if l == ['O','O','O']:
                 return True
-        for i in range(3):
-            return (lst[0][i] == lst[1][i] == lst[2][i] == 'O')
-        return (((lst[0][0] == lst[1][1] == lst[2][2] == 'O') or (lst[0][2] == lst[1][1] == lst[2][0])) == 'O')
+        if lst[0][0] == lst[1][1] == lst[2][2] == 'O':
+            
+            
+            return True
+        elif lst[0][2] == lst[1][1] == lst[2][0] == 'O':
+    
+    
+    
+            return True
 
     
     def proc(self, my_msg, peer_msg):
@@ -248,25 +276,11 @@ class ClientSM:
                 
         elif self.state == S_PLAYING:
 
-            if self.check_X_winner(self.array):
-                self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
-                        
-                self.out_msg = "\nX win! Enjoy chatting!\n\n"
-                         
-                self.state = S_LOGGEDIN
-                self.game_peer = ''
-                mysend(self.s, json.dumps({"action" : "quit"}))
-                        
-            if self.check_O_winner(self.array):
-                self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
-                        
-                self.out_msg = "\nO Wins! Enjoy chatting!\n\n"
-                          
-                self.state = S_LOGGEDIN
-                self.game_peer = ''
-                mysend(self.s, json.dumps({"action" : "quit"}))
+            
 
             if len(my_msg) > 0:
+                
+                    
                 if my_msg == 'quit' :
                     self.state = S_CHATTING
                     self.game_peer = ''
@@ -274,12 +288,42 @@ class ClientSM:
                     self.out_msg += 'You just quit the game. Resuming chat...\n'
                     
                 elif self.player_move(my_msg, self.key) == True:
-                    self.state = S_WAITING
                     msg = json.dumps({"action":"move", "position" : my_msg, "key": self.key})
                     mysend(self.s, msg)
-                    self.out_msg += '\n\nWaiting on other player move... \n\n'
+                    if self.draw(self.array):
+                        self.print_array
+                        self.out_msg += "\nIt's a Draw!!!!"
+                        self.out_msg += "\nGame ended! Enjoy chatting!\n\n"
+                        self.state = S_CHATTING
+                        self.game_peer = ''
+                    
+                    elif self.check_X_winner(self.array) == True:
+                        #mysend(self.s, json.dumps({"action" : "end"}))
+                        self.print_array
+                        self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
+                                
+                        self.out_msg += "\nX Wins!"
+                        self.out_msg += "\nGame ended! Enjoy chatting!\n\n"
+                                 
+                        self.state = S_CHATTING
+                        self.game_peer = ''
+                        
+                        
+                    elif self.check_O_winner(self.array) == True:
+                        #mysend(self.s, json.dumps({"action" : "end"}))
+                        self.print_array
+                        self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
+                                
+                        self.out_msg += "\nO Wins!"
+                        self.out_msg += "\nGame ended! Enjoy chatting!\n\n"
+                                 
+                        self.state = S_CHATTING
+                        self.game_peer = ''
+                    else: 
+                        self.out_msg += '\n\nWaiting on other player move... \n\n'
+                        self.state = S_WAITING
 
-                                    
+                                
 
             
         elif self.state == S_WAITING:
@@ -291,11 +335,46 @@ class ClientSM:
                     key = peer_msg['key']
                     self.out_msg += "Your turn\n\n"
                     self.player_move(command, key)
+                    if self.draw(self.array):
+                        self.print_array
+                        self.out_msg += "\nIt's a Draw!!!!"
+                        self.out_msg += "\nGame ended! Enjoy chatting!\n\n"
+                        self.state = S_CHATTING
+                        self.game_peer = ''
+                    elif self.check_X_winner(self.array) == True:
+                    #mysend(self.s, json.dumps({"action" : "end"}))
+                        self.print_array
+                        self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
+                                
+                        self.out_msg += "\nX Wins!"
+                        self.out_msg += "\nGame ended! Enjoy chatting!\n\n"
+                                 
+                        self.state = S_CHATTING
+                        self.game_peer = ''
+                        
+                        
+                    elif self.check_O_winner(self.array) == True:
+                        #mysend(self.s, json.dumps({"action" : "end"}))
+                        self.print_array
+                        self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
+                                
+                        self.out_msg += "\nO Wins!"
+                        self.out_msg += "\nGame ended! Enjoy chatting!\n\n"
+                                 
+                        self.state = S_CHATTING
+                        self.game_peer = ''   
                     
                 elif peer_msg["action"] == 'quit':
                     self.out_msg += 'Partner jus quit the game. Resuming chat...\n'
                     self.game_peer = ''
                     self.state = S_CHATTING
+                
+#                elif peer_msg["action"] == 'end':
+#                    self.out_msg += 'Game ended. Resuming chat...\n'
+#                    self.game_peer = ''
+#                    self.state = S_CHATTING
+                
+                         
                        
 #==============================================================================
 # invalid state
