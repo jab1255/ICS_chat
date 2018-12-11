@@ -16,16 +16,18 @@ menu = "\n++++ Choose one of the following commands\n \
         ? _term_: to search your chat logs where _term_ appears\n \
         p _#_: to get number <#> sonnet\n \
         q: to leave the chat system\n\
-        \n +++ Game +++ \n\
-        tictactoe _peer_: to play\n\n"
+        \n \t \t +++ Game +++ \n\
+        tictactoe _peer_: to play\n\
+        chat: to leave game and resume chatting \n\n"
 
 S_OFFLINE   = 0
 S_CONNECTED = 1
 S_LOGGEDIN  = 2
 S_CHATTING  = 3
 S_PLAYING = 4
+S_WAITING = 5
 
-SIZE_SPEC = 5
+SIZE_SPEC = 6
 
 CHAT_WAIT = 0.2
 

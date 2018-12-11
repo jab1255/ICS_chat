@@ -175,6 +175,18 @@ class ClientSM:
                     self.out_msg += '. Chat away!\n\n'
                     self.out_msg += '------------------------------------\n'
                     self.state = S_CHATTING
+                
+                elif peer_msg["action"] == "game_request":
+                    self.peer = peer_msg["from"]
+                    self.out_msg += 'Request from ' + self.peer + '\n'
+                    self.out_msg += 'You are connected with ' + self.peer
+                    self.out_msg += '. Game on!\n\n'
+                    self.out_msg += '------------------------------------\n'
+                    self.out_msg += 'Game functionality:'
+                    self.out_msg += 'type x,y coordinates 0,0 is the top-left corner and 2,2 is the bottom-right corner.\n\n'
+                    self.state = S_WAITING
+                    self.out_msg += "Other player's turn\n"
+                    self.print_array()
     
 #==============================================================================
 # Start chatting, 'bye' for quit
@@ -193,7 +205,10 @@ class ClientSM:
                     if self.tictactoe_to(peer) == True:
                         self.out_msg += 'Connected to ' + peer + '. Match on!\n\n'
                         self.out_msg += '-----------------------------------\n'
+                        self.out_msg += 'Game functionality:'
+                        self.out_msg += 'type x,y coordinates 0,0 is the top-left corner and 2,2 is the bottom-right corner.\n\n'
                         self.state = S_PLAYING
+                        self.print_array()
                     else:
                         self.out_msg += 'Connection unsuccessful\n'
             
@@ -212,7 +227,11 @@ class ClientSM:
                         self.out_msg += 'You are connected with ' + self.peer
                         self.out_msg += '. Match on!\n\n'
                         self.out_msg += '------------------------------------\n'
-                        self.state = S_PLAYING
+                        self.out_msg += 'Game functionality:'
+                        self.out_msg += 'type x,y coordinates 0,0 is the top-left corner and 2,2 is the bottom-right corner.\n\n'
+                        self.state = S_WAITING
+                        self.out_msg += "Other player's turn\n"
+                        self.print_array()
                 
                 else:
                     self.out_msg += peer_msg["from"] + peer_msg["message"]
@@ -227,20 +246,25 @@ class ClientSM:
 #==============================================================================
                 
         elif self.state == S_PLAYING:
-            
-            self.out_msg += 'Game functionality: type x,y coordinates\n\
-                            0,0 is the top-left corner and 2,2 is the\n\
-                            bottom-right corner' 
             if len(my_msg) > 0:
-                if self.player_move(my_msg, self.key) == TRUE:
-                    msg = json.dumps({"action":"move", "from":self.me, "position" : my_msg, "key": self.key})
+                if self.player_move(my_msg, self.key) == True:
+                    self.state = S_WAITING
+                    msg = json.dumps({"action":"move", "position" : my_msg, "key": self.key})
                     mysend(self.s, msg)
-            if len(peer_msg) > 0: 
+                
+
+            
+        elif self.state == S_WAITING:
+            if len(peer_msg) > 0:
+                self.out_msg += "Other player's turn" 
+                peer_msg = json.loads(peer_msg)
                 if peer_msg["action"] == "move":
+                    self.state = S_PLAYING
                     command = peer_msg['position']
                     key = peer_msg['key']
                     self.player_move(command, key)
-            
+                
+                       
 #==============================================================================
 # invalid state
 #==============================================================================
