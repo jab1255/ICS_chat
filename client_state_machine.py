@@ -247,6 +247,25 @@ class ClientSM:
 #==============================================================================
                 
         elif self.state == S_PLAYING:
+
+            if self.check_X_winner(self.array):
+                self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
+                        
+                self.out_msg = "\nX win! Enjoy chatting!\n\n"
+                         
+                self.state = S_LOGGEDIN
+                self.game_peer = ''
+                mysend(self.s, json.dumps({"action" : "quit"}))
+                        
+            if self.check_O_winner(self.array):
+                self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
+                        
+                self.out_msg = "\nO Wins! Enjoy chatting!\n\n"
+                          
+                self.state = S_LOGGEDIN
+                self.game_peer = ''
+                mysend(self.s, json.dumps({"action" : "quit"}))
+
             if len(my_msg) > 0:
                 if my_msg == 'quit' :
                     self.state = S_CHATTING
@@ -259,7 +278,8 @@ class ClientSM:
                     msg = json.dumps({"action":"move", "position" : my_msg, "key": self.key})
                     mysend(self.s, msg)
                     self.out_msg += '\n\nWaiting on other player move... \n\n'
-                
+
+                                    
 
             
         elif self.state == S_WAITING:
