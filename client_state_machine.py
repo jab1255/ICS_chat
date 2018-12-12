@@ -74,7 +74,7 @@ class ClientSM:
         self.peer = ''
         
     def tictactoe_to(self, peer):
-        msg = json.dumps({"action":"game_request", "from":peer})
+        msg = json.dumps({"action":"game_request", "from":self.me, "to": peer})
         mysend(self.s, msg)
         response = json.loads(myrecv(self.s))
         if response["status"] == "success":
@@ -141,12 +141,14 @@ class ClientSM:
             return True
         elif lst[0][2] == lst[1][1] == lst[2][0] == 'O':
             return True
-
+        
+    def reset_keys (self):
+        self.public_key = ()
+        self.peer_key = ()
+        self.private_key = ()
     
     def proc(self, my_msg, peer_msg):
         self.out_msg = ''
-        
-        
        
 #==============================================================================
 # Once logged in, do a few things: get peer listing, connect, search
@@ -213,18 +215,6 @@ class ClientSM:
                     self.out_msg += '. Chat away!\n\n'
                     self.out_msg += '------------------------------------\n'
                     self.state = S_CHATTING
-                
-                elif peer_msg["action"] == "game_request":
-                    self.game_peer = peer_msg["from"]
-                    self.out_msg += 'Request from ' + self.game_peer + '\n'
-                    self.out_msg += 'You are connected with ' + self.game_peer
-                    self.out_msg += '. Game on!\n\n'
-                    self.out_msg += '------------------------------------\n'
-                    self.out_msg += 'Game functionality:'
-                    self.out_msg += 'type x,y coordinates.\n x represents the horizontal x-axis. y represents the vertical y-axis 0,0 is the top-left corner and 2,2 is the bottom-right corner.\n\n'
-                    self.out_msg += "Other player's turn\n"
-                    self.print_array()
-                    self.state = S_WAITING
     
 #==============================================================================
 # Start chatting, 'bye' for quit
@@ -235,16 +225,14 @@ class ClientSM:
                 self.public_key, self.private_key = rsa.generate_keys()
                 mysend(self.s, json.dumps({"action" :"transfer", "key" : self.public_key}))
             if len(my_msg) > 0:     # my stuff going out
-                encrypted_msg = rsa.encrypt(my_msg, self.peer_key)
+                encrypted_msg = rsa.encrypt(my_msg, self.private_key)
                 mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":encrypted_msg}))
                 if my_msg == 'bye':
                     mysend(self.s, json.dumps({"action" :"reset"}))
                     self.disconnect()
                     self.state = S_LOGGEDIN
                     self.peer = ''
-                    self.public_key = ()
-                    self.peer_key = ()
-                    self.private_key = ()
+                    self.reset_keys()
                         
             if (len(my_msg) > 0 ) and (my_msg[0:9] == 'tictactoe'):
                 peer = my_msg[10:]
@@ -270,15 +258,13 @@ class ClientSM:
                 elif peer_msg["action"] == "transfer":
                     self.peer_key = peer_msg["key"]
                 elif peer_msg["action"] == "reset":
-                    self.public_key = ()
-                    self.peer_key = ()
-                    self.private_key = ()
+                    self.reset_keys()
                 elif peer_msg ['action'] == 'exchange':
-                    decrypted = rsa.decrypt(peer_msg['message'], self.private_key)
+                    decrypted = rsa.decrypt(peer_msg['message'], self.peer_key)
                     self.out_msg += "ENCRYPTED: " + peer_msg['message'] + '\n'
                     self.out_msg += peer_msg["from"] + decrypted            
                 elif len(peer_msg) > 0:
-                    if peer_msg["action"] == "game_request":
+                    if (peer_msg["action"] == "game_request") and (self.state == S_CHATTING):
                         self.game_peer = peer_msg["from"]
                         self.key = "O"
                         self.out_msg += '\n\n-----------------------------------\n'
@@ -302,11 +288,7 @@ class ClientSM:
 #==============================================================================
                 
         elif self.state == S_PLAYING:
-
-            
-
-            if len(my_msg) > 0:
-                
+            if len(my_msg) > 0:         
                     
                 if my_msg == 'quit' :
                     self.state = S_CHATTING
@@ -315,7 +297,7 @@ class ClientSM:
                     self.out_msg += 'You just quit the game. Resuming chat...\n'
                     
                 elif self.player_move(my_msg, self.key) == True:
-                    msg = json.dumps({"action":"move", "position" : my_msg, "key": self.key})
+                    msg = json.dumps({"action":"move", "position" : my_msg, "key": self.key, "to": self.game_peer})
                     mysend(self.s, msg)
                     if self.draw(self.array):
                         self.print_array
@@ -422,8 +404,6 @@ class ClientSM:
 #                    self.game_peer = ''
 #                    self.state = S_CHATTING
                 
-                         
-                       
 #==============================================================================
 # invalid state
 #==============================================================================
