@@ -116,6 +116,21 @@ class Server:
                     msg = json.dumps({"action":"connect", "status":"no-user"})
                 mysend(from_sock, msg)
 #==============================================================================
+# key exchange
+#==============================================================================
+            elif msg["action"] == "transfer":
+                from_name = self.logged_sock2name[from_sock]
+                the_guys = self.group.list_me(from_name)
+                for g in the_guys[1:]:
+                    to_sock = self.logged_name2sock[g]
+                    mysend(to_sock, json.dumps(msg))
+            elif msg["action"] == "reset":
+                from_name = self.logged_sock2name[from_sock]
+                the_guys = self.group.list_me(from_name)
+                for g in the_guys[1:]:
+                    to_sock = self.logged_name2sock[g]
+                    mysend(to_sock, json.dumps(msg))
+#==============================================================================
 # handle messeage exchange: one peer for now. will need multicast later
 #==============================================================================
             elif msg["action"] == "exchange":

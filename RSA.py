@@ -1,11 +1,9 @@
 import random
 from math import gcd as gcd
 
-size = 100
-
 def is_prime (n):
     factors = []
-    for i in range(2,n):
+    for i in range(1, n):
         if (n % i) == 0:
             factors.append(i)
     if len(factors) == 1:
@@ -22,9 +20,8 @@ def coprime(n, lst):
     coprimes = []
     for i in lst:
         divisor = gcd(n, i)
-        if ( divisor == 1):
+        if (divisor == 1):
             coprimes.append(i)
-    print(coprime)
     return coprimes
 
 def get_primes():
@@ -47,12 +44,12 @@ def get_e (n , phi):
     n_factors = get_prime_factors(n)
     phi_factors = get_prime_factors(phi)
     n_factors.extend(phi_factors)
+    factors = set(n_factors)
     possibilities = []
     for i in range (2, (phi + 1)):
-        lst = coprime(i, n_factors)
+        lst = coprime(i, factors)
         possibilities.extend(lst)
-    real_pos = list(set(possibilities))
-    e = random.choice(real_pos)
+    e = random.choice(possibilities)
     return e
 
 def get_d (e, phi):
@@ -60,24 +57,31 @@ def get_d (e, phi):
     for n in range(3, phi):
         if ((e * n) % phi) == 1:
             lst.append(n)
+    if lst == []:
+        return None
     d = random.choice(lst)
     return d
 
 def generate_keys():
-    p, q = get_primes()
-    n = get_n(p, q)
-    phi = get_phi(p, q)
-    e = get_e(n, phi)
-    d = get_d(e, phi)
+    d = None 
+    while (d == None):
+        p, q = get_primes()
+        n = get_n(p, q)
+        phi = get_phi(p, q)
+        e = get_e(n, phi)
+        d = get_d(e, phi)
     return (e,n), (d,n)
 
-print(str(generate_keys()))
+def encrypt (msg, key): # key = (e, n)
+    encrypted = ''
+    for c in msg: 
+        s = (ord(c)**key[0]) % key[1]
+        encrypted += chr(s)
+    return encrypted 
 
-
-
-        
-    
-    
-    
-
-    
+def decrypt (msg, key):
+    decrypted = ''
+    for c in msg:
+        s = (ord(c)**key[0]) % key[1]
+        decrypted += chr(s)
+    return decrypted

@@ -5,6 +5,7 @@ Created on Sun Apr  5 00:00:32 2015
 """
 from chat_utils import *
 import json
+import RSA as rsa
 
 
 class ClientSM:
@@ -15,6 +16,9 @@ class ClientSM:
         self.out_msg = ''
         self.s = s
         self.game_peer = ''
+        self.public_key = ()
+        self.private_key = ()
+        self.peer_key = ()
         self.move = []
         self.array = [[' ', ' ', ' '], [' ', ' ', ' '], [' ', ' ', ' ']]
         self.key = ''
@@ -225,12 +229,20 @@ class ClientSM:
 # This is event handling instate "S_CHATTING"
 #==============================================================================
         elif self.state == S_CHATTING:
+            if self.public_key == ():
+                self.public_key, self.private_key = rsa.generate_keys()
+                mysend(self.s, json.dumps({"action" :"transfer", "key" : self.public_key}))
             if len(my_msg) > 0:     # my stuff going out
-                mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":my_msg}))
+                encrypted_msg = rsa.encrypt(my_msg, self.private_key)
+                mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":encrypted_msg}))
                 if my_msg == 'bye':
+                    mysend(self.s, json.dumps({"action" :"reset"}))
                     self.disconnect()
                     self.state = S_LOGGEDIN
                     self.peer = ''
+                    self.public_key = ()
+                    self.peer_key = ()
+                    self.private_key = ()
                         
             if (len(my_msg) > 0 ) and (my_msg[0:9] == 'tictactoe'):
                 peer = my_msg[10:]
@@ -253,9 +265,16 @@ class ClientSM:
                     self.out_msg += "(" + peer_msg["from"] + " joined)\n"
                 elif peer_msg["action"] == "disconnect":
                     self.state = S_LOGGEDIN
+                elif peer_msg["action"] == "transfer":
+                    self.peer_key = peer_msg["key"]
+                elif peer_msg["action"] == "reset":
+                    self.public_key = ()
+                    self.peer_key = ()
+                    self.private_key = ()
                 elif peer_msg ['action'] == 'exchange':
-                    self.out_msg += peer_msg["from"] + peer_msg["message"]
-            
+                    decrypted = rsa.decrypt(peer_msg['message'], self.peer_key)
+                    self.out_msg += "ENCRYPTED: " + peer_msg['message']
+                    self.out_msg += peer_msg["from"] + decrypted            
                 elif len(peer_msg) > 0:
                     if peer_msg["action"] == "game_request":
                         self.game_peer = peer_msg["from"]
