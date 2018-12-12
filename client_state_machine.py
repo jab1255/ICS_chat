@@ -6,6 +6,7 @@ Created on Sun Apr  5 00:00:32 2015
 from chat_utils import *
 import json
 
+
 class ClientSM:
     def __init__(self, s):
         self.state = S_OFFLINE
@@ -46,26 +47,21 @@ class ClientSM:
             self.out_msg += 'User is not online, try again later\n'
         return(False)
         
-        
-    def valid_move(command):
+    def valid_move(self, command):
         lst=[]
         for c in command:
-        
             if c.isalpha():
                 return False
             try:
                 lst.append(int(c))
             except:
                 pass    
-        if  len(lst) > 2 or len(lst) < 2:
+        if (len(lst) > 2) or (len(lst) < 2):
             return False
-        
         for pos in lst:
             if pos > 2 or pos < 0:
                 return False
-    
         return lst
-
     
     def disconnect(self):
         msg = json.dumps({"action":"disconnect"})
@@ -89,33 +85,26 @@ class ClientSM:
             self.out_msg += 'User is not online, try again later\n'
         return(False)
         
-    def print_array(self):
-        
-        
-        
+    def print_array(self):        
        
         print(" " + self.array[0][0] +" " +"#"+" " + self.array[0][1] +" " + "#"+ " " + self.array[0][2] +" ")
         print("###########")
         print(" " + self.array[1][0] +" " +"#"+" " + self.array[1][1] +" " +"#"+ " " + self.array[1][2] +" ")
-        print("###########")
+        print("###########") 
         print(" " + self.array[2][0] +" " +"#"+" " + self.array[2][1] +" " +"#"+ " " + self.array[2][2] +" ")
-       
         
-    def player_move(self,command, key):
-        
+    def player_move(self, command, key):
         if self.valid_move(command) != False:
             self.move = self.valid_move(command)
-        
             if  self.array[self.move[1]][self.move[0]] == " ":
                 self.array[self.move[1]][self.move[0]] = key
                 self.print_array()
                 return True
-            
             else:
-                self.out_msg += "Invalid move. Position is already taken."
-                
+                self.out_msg += "Invalid move. Position is already taken.\n"  
         else:
-            self.out_msg += "Invalid move, Please add correct coordinates"                
+            self.out_msg += "Invalid move, Please add correct coordinates.\n"        
+
     def draw (self,lst):
         for l in lst:
             for i in l:
@@ -123,34 +112,28 @@ class ClientSM:
                     return False
         return True            
         
-    
-        
     def check_X_winner (self,lst):
         for l in lst:
             if l == ['X','X','X']:
                 return True
-        if lst[0][0] == lst[1][1] == lst[2][2] == 'X':
-            
-            
+        for i in range(3):
+            if lst[0][i] == lst[1][i] == lst[2][i] == 'X':
+                return True       
+        if lst[0][0] == lst[1][1] == lst[2][2] == 'X':            
             return True
-        elif lst[0][2] == lst[1][1] == lst[2][0] == 'X':
-    
-    
-    
+        elif lst[0][2] == lst[1][1] == lst[2][0] == 'X':    
             return True
 
     def check_O_winner (self,lst):
         for l in lst:
             if l == ['O','O','O']:
                 return True
-        if lst[0][0] == lst[1][1] == lst[2][2] == 'O':
-            
-            
+        for i in range(3):
+            if lst[0][i] == lst[1][i] == lst[1][i] == 'O':
+                return True        
+        if lst[0][0] == lst[1][1] == lst[2][2] == 'O':            
             return True
         elif lst[0][2] == lst[1][1] == lst[2][0] == 'O':
-    
-    
-    
             return True
 
     
@@ -226,16 +209,16 @@ class ClientSM:
                     self.state = S_CHATTING
                 
                 elif peer_msg["action"] == "game_request":
-                    self.peer = peer_msg["from"]
-                    self.out_msg += 'Request from ' + self.peer + '\n'
-                    self.out_msg += 'You are connected with ' + self.peer
+                    self.game_peer = peer_msg["from"]
+                    self.out_msg += 'Request from ' + self.game_peer + '\n'
+                    self.out_msg += 'You are connected with ' + self.game_peer
                     self.out_msg += '. Game on!\n\n'
                     self.out_msg += '------------------------------------\n'
                     self.out_msg += 'Game functionality:'
                     self.out_msg += 'type x,y coordinates.\n x represents the horizontal x-axis. y represents the vertical y-axis 0,0 is the top-left corner and 2,2 is the bottom-right corner.\n\n'
-                    self.state = S_WAITING
                     self.out_msg += "Other player's turn\n"
                     self.print_array()
+                    self.state = S_WAITING
     
 #==============================================================================
 # Start chatting, 'bye' for quit
@@ -253,6 +236,7 @@ class ClientSM:
                 peer = my_msg[10:]
                 peer.strip()
                 if self.tictactoe_to(peer) == True:
+                    self.game_peer = peer
                     self.out_msg += '\n\n-----------------------------------\n'
                     self.out_msg += '\nConnected to ' + peer + '. Match on!\n\n'
                     self.out_msg += '-----------------------------------\n'
@@ -260,8 +244,8 @@ class ClientSM:
                     self.out_msg += 'type x,y coordinates 0,0 is the top-left corner \n 2,2 is the bottom-right corner.\n\n'
                     self.out_msg += 'You are: ' + self.key
                     self.out_msg += '\n\n Your turn \n\n'
-                    self.state = S_PLAYING
                     self.print_array()
+                    self.state = S_PLAYING
             
             if len(peer_msg) > 0:    # peer's stuff, coming in
                 peer_msg = json.loads(peer_msg)
@@ -284,9 +268,9 @@ class ClientSM:
                         self.out_msg += 'Game functionality:'
                         self.out_msg += 'type x,y coordinates 0,0 is the top-left corner \n 2,2 is the bottom-right corner.\n\n'
                         self.out_msg += 'You are: ' + self.key
-                        self.state = S_WAITING
-                        self.out_msg += "\n\n Other player's turn\n\n"
                         self.print_array()
+                        self.out_msg += "\n\n Other player's turn\n\n"
+                        self.state = S_WAITING
 
             # Display the menu again
             if self.state == S_LOGGEDIN:
@@ -352,11 +336,11 @@ class ClientSM:
             if len(peer_msg) > 0:
                 peer_msg = json.loads(peer_msg)
                 if peer_msg["action"] == "move":
-                    self.state = S_PLAYING
                     command = peer_msg['position']
                     key = peer_msg['key']
                     self.out_msg += "Your turn\n\n"
                     self.player_move(command, key)
+                    self.state = S_PLAYING
                     if self.draw(self.array):
                         self.print_array
                         self.out_msg += "\nIt's a Draw!!!!"
