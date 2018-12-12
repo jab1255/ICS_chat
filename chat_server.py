@@ -15,19 +15,20 @@ import pickle as pkl
 from chat_utils import *
 import chat_group as grp
 
+
 class Server:
     def __init__(self):
-        self.new_clients = [] #list of new sockets of which the user id is not known
-        self.logged_name2sock = {} #dictionary mapping username to socket
-        self.logged_sock2name = {} # dict mapping socket to user name
+        self.new_clients = []   # list of new sockets of which the user id is not known
+        self.logged_name2sock = {}   # dictionary mapping username to socket
+        self.logged_sock2name = {}  # dict mapping socket to user name
         self.all_sockets = []
         self.group = grp.Group()
-        #start server
-        self.server=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # start server
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(SERVER)
         self.server.listen(5)
         self.all_sockets.append(self.server)
-        #initialize past chat indices
+        # initialize past chat indices
         self.indices={}
         # sonnet
         # self.sonnet_f = open('AllSonnets.txt.idx', 'rb')
@@ -36,14 +37,14 @@ class Server:
         self.sonnet = indexer.PIndex("AllSonnets.txt")
 
     def new_client(self, sock):
-        #add to all sockets and to new clients
+        # add to all sockets and to new clients
         print('new client...')
         sock.setblocking(0)
         self.new_clients.append(sock)
         self.all_sockets.append(sock)
 
     def login(self, sock):
-        #read the msg that should have login code plus username
+        # read the msg that should have login code plus username
         try:
             msg = json.loads(myrecv(sock))
             if len(msg) > 0:
@@ -51,26 +52,26 @@ class Server:
                 if msg["action"] == "login":
                     name = msg["name"]
                     if self.group.is_member(name) != True:
-                        #move socket from new clients list to logged clients
+                        # move socket from new clients list to logged clients
                         self.new_clients.remove(sock)
-                        #add into the name to sock mapping
+                        # add into the name to sock mapping
                         self.logged_name2sock[name] = sock
                         self.logged_sock2name[sock] = name
-                        #load chat history of that user
+                        # load chat history of that user
                         if name not in self.indices.keys():
-                            try:
+                            try: 
                                 self.indices[name]=pkl.load(open(name+'.idx','rb'))
-                            except IOError: #chat index does not exist, then create one
+                            except IOError:  # chat index does not exist, then create one
                                 self.indices[name] = indexer.Index(name)
                         print(name + ' logged in')
                         self.group.join(name)
                         mysend(sock, json.dumps({"action":"login", "status":"ok"}))
-                    else: #a client under this name has already logged in
+                    else:  # a client under this name has already logged in
                         mysend(sock, json.dumps({"action":"login", "status":"duplicate"}))
                         print(name + ' duplicate login attempt')
                 else:
                     print ('wrong code received')
-            else: #client died unexpectedly
+            else:  # client died unexpectedly
                 self.logout(sock)
         except:
             self.all_sockets.remove(sock)
