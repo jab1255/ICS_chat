@@ -45,7 +45,28 @@ class ClientSM:
         else:
             self.out_msg += 'User is not online, try again later\n'
         return(False)
+        
+        
+    def valid_move(command):
+        lst=[]
+        for c in command:
+        
+            if c.isalpha():
+                return False
+            try:
+                lst.append(int(c))
+            except:
+                pass    
+        if  len(lst) > 2 or len(lst) < 2:
+            return False
+        
+        for pos in lst:
+            if pos > 2 or pos < 0:
+                return False
+    
+        return lst
 
+    
     def disconnect(self):
         msg = json.dumps({"action":"disconnect"})
         mysend(self.s, msg)
@@ -69,31 +90,32 @@ class ClientSM:
         return(False)
         
     def print_array(self):
-        g= self.array
         
         
-        print("   #   #   ")
-        print(" " + g[0][0] +" " +"#"+" " + g[1][0] +" " + "#"+ " " + g[2][0] +" ")
-        print("####################")
-        print(" " + g[0][1] +" " +"#"+" " + g[1][1] +" " +"#"+ " " + g[2][1] +" ")
-        print("####################")
-        print(" " + g[0][2] +" " +"#"+" " + g[1][2] +" " +"#"+ " " + g[2][2] +" ")
+        
+       
+        print(" " + self.array[0][0] +" " +"#"+" " + self.array[0][1] +" " + "#"+ " " + self.array[0][2] +" ")
+        print("###########")
+        print(" " + self.array[1][0] +" " +"#"+" " + self.array[1][1] +" " +"#"+ " " + self.array[1][2] +" ")
+        print("###########")
+        print(" " + self.array[2][0] +" " +"#"+" " + self.array[2][1] +" " +"#"+ " " + self.array[2][2] +" ")
        
         
     def player_move(self,command, key):
-        self.move = []
-        for c in command:
-            try:
-                self.move.append(int(c))
-            except:
-                pass
         
-        if  self.array[self.move[1]][self.move[0]] == " ":
-            self.array[self.move[1]][self.move[0]] = key
-            self.print_array()
-            return True
+        if self.valid_move(command) != False:
+            self.move = self.valid_move(command)
+        
+            if  self.array[self.move[1]][self.move[0]] == " ":
+                self.array[self.move[1]][self.move[0]] = key
+                self.print_array()
+                return True
+            
+            else:
+                self.out_msg += "Invalid move. Position is already taken."
+                
         else:
-            self.out_msg += "Invalid move. Position is already taken."
+            self.out_msg += "Invalid move, Please add correct coordinates"                
     def draw (self,lst):
         for l in lst:
             for i in l:
@@ -210,7 +232,7 @@ class ClientSM:
                     self.out_msg += '. Game on!\n\n'
                     self.out_msg += '------------------------------------\n'
                     self.out_msg += 'Game functionality:'
-                    self.out_msg += 'type x,y coordinates 0,0 is the top-left corner and 2,2 is the bottom-right corner.\n\n'
+                    self.out_msg += 'type x,y coordinates.\n x represents the horizontal x-axis. y represents the vertical y-axis 0,0 is the top-left corner and 2,2 is the bottom-right corner.\n\n'
                     self.state = S_WAITING
                     self.out_msg += "Other player's turn\n"
                     self.print_array()
