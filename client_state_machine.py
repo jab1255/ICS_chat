@@ -90,7 +90,8 @@ class ClientSM:
         return(False)
         
     def print_array(self):        
-       
+        print('-----------------------------------\n\n')
+
         print(" " + self.array[0][0] +" " +"#"+" " + self.array[0][1] +" " + "#"+ " " + self.array[0][2] +" ")
         print("###########")
         print(" " + self.array[1][0] +" " +"#"+" " + self.array[1][1] +" " +"#"+ " " + self.array[1][2] +" ")
@@ -107,7 +108,8 @@ class ClientSM:
             else:
                 self.out_msg += "Invalid move. Position is already taken.\n"  
         else:
-            self.out_msg += "Invalid move, Please add correct coordinates.\n"        
+            self.out_msg += "Invalid move, Please add correct coordinates.\n" 
+            
 
     def draw (self,lst):
         for l in lst:
@@ -133,7 +135,7 @@ class ClientSM:
             if l == ['O','O','O']:
                 return True
         for i in range(3):
-            if lst[0][i] == lst[1][i] == lst[1][i] == 'O':
+            if lst[0][i] == lst[1][i] == lst[2][i] == 'O':
                 return True        
         if lst[0][0] == lst[1][1] == lst[2][2] == 'O':            
             return True
@@ -233,7 +235,7 @@ class ClientSM:
                 self.public_key, self.private_key = rsa.generate_keys()
                 mysend(self.s, json.dumps({"action" :"transfer", "key" : self.public_key}))
             if len(my_msg) > 0:     # my stuff going out
-                encrypted_msg = rsa.encrypt(my_msg, self.private_key)
+                encrypted_msg = rsa.encrypt(my_msg, self.peer_key)
                 mysend(self.s, json.dumps({"action":"exchange", "from":"[" + self.me + "]", "message":encrypted_msg}))
                 if my_msg == 'bye':
                     mysend(self.s, json.dumps({"action" :"reset"}))
@@ -272,8 +274,8 @@ class ClientSM:
                     self.peer_key = ()
                     self.private_key = ()
                 elif peer_msg ['action'] == 'exchange':
-                    decrypted = rsa.decrypt(peer_msg['message'], self.peer_key)
-                    self.out_msg += "ENCRYPTED: " + peer_msg['message']
+                    decrypted = rsa.decrypt(peer_msg['message'], self.private_key)
+                    self.out_msg += "ENCRYPTED: " + peer_msg['message'] + '\n'
                     self.out_msg += peer_msg["from"] + decrypted            
                 elif len(peer_msg) > 0:
                     if peer_msg["action"] == "game_request":
@@ -360,12 +362,33 @@ class ClientSM:
                     self.out_msg += "Your turn\n\n"
                     self.player_move(command, key)
                     self.state = S_PLAYING
-                    if self.draw(self.array):
+                    if self.draw(self.array) == True and self.check_X_winner(self.array) == True:
+                        self.print_array
+                        self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
+                                
+                        self.out_msg += "\nX Wins!"
+                        self.out_msg += "\nGame ended! Enjoy chatting!\n\n"
+                                 
+                        self.state = S_CHATTING
+                        self.game_peer = ''
+                        
+                    if self.draw(self.array) == True and self.check_O_winner(self.array) == True:
+                        self.print_array
+                        self.array = [[" "," "," "],[" "," "," "],[" "," "," "]]
+                                
+                        self.out_msg += "\nO Wins!"
+                        self.out_msg += "\nGame ended! Enjoy chatting!\n\n"
+                                 
+                        self.state = S_CHATTING
+                        self.game_peer = ''     
+                    
+                    elif self.draw(self.array):
                         self.print_array
                         self.out_msg += "\nIt's a Draw!!!!"
                         self.out_msg += "\nGame ended! Enjoy chatting!\n\n"
                         self.state = S_CHATTING
                         self.game_peer = ''
+                        
                     elif self.check_X_winner(self.array) == True:
                     #mysend(self.s, json.dumps({"action" : "end"}))
                         self.print_array
