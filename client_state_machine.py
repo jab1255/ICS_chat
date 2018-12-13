@@ -292,8 +292,8 @@ class ClientSM:
                     
                 if my_msg == 'quit' :
                     self.state = S_CHATTING
+                    mysend(self.s, json.dumps({"action":"quit", "to":self.game_peer}))
                     self.game_peer = ''
-                    mysend(self.s, json.dumps({"action":"quit"}))
                     self.out_msg += 'You just quit the game. Resuming chat...\n'
                     
                 elif self.player_move(my_msg, self.key) == True:
